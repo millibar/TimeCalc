@@ -56,6 +56,21 @@ npm test          # ユニットテストを実行
 npm run lint      # ESLint を実行
 ```
 
+## デプロイ
+
+`master` ブランチに push すると、GitHub Actions（[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)）が自動的に以下を実行し、GitHub Pages に公開します。
+
+1. `npm ci` で依存関係をインストール
+2. `npm run build` でビルド（`dist/` を生成）
+3. `dist/` を GitHub Pages にデプロイ
+
+公開URL: https://millibar.github.io/TimeCalc/
+
+- GitHub側の設定は Pages のソースを「GitHub Actions」にしてあります（リポジトリの Settings → Pages）。
+- `vite.config.ts` の `base` をリポジトリ名に合わせて `/TimeCalc/` に設定しており、PWAマニフェストの `start_url` / `scope` もこのサブパスに合わせています。リポジトリ名を変更した場合はここも合わせて変更が必要です。
+- デプロイ状況は `gh run list` や `gh run watch <run-id>`、またはリポジトリの Actions タブから確認できます。
+- 手動での再実行は Actions タブの workflow_dispatch、または `gh workflow run deploy.yml` から行えます。
+
 ## アーキテクチャ
 
 ```
