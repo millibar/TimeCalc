@@ -1,0 +1,96 @@
+.calculator {
+  width: min(360px, 100vw);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.display {
+  background: #181825;
+  border-radius: 16px;
+  padding: 20px 16px;
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 6px;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.display-formula {
+  font-size: 1.25rem;
+  color: #9399b2;
+  min-height: 1.5em;
+  text-align: right;
+}
+
+.display-result {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #cdd6f4;
+  text-align: right;
+}
+
+.display-result.is-error {
+  color: #f38ba8;
+  font-size: 1.5rem;
+}
+
+.display-result .sub-minute {
+  text-decoration: underline;
+  text-decoration-color: #f9e2af;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.key {
+  font-size: 1.25rem;
+  padding: 18px 0;
+  border: none;
+  border-radius: 12px;
+  background: #313244;
+  color: #cdd6f4;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.key:active {
+  background: #45475a;
+}
+
+.key.op {
+  background: #45475a;
+  color: #89b4fa;
+}
+
+.key.op:active {
+  background: #585b70;
+}
+
+.key.equals {
+  background: #89b4fa;
+  color: #1e1e2e;
+  font-weight: 600;
+}
+
+.key.equals:active {
+  background: #74a8f7;
+}
+
+.key.ac {
+  background: #f38ba8;
+  color: #1e1e2e;
+}
+
+.key.ac:active {
+  background: #ea7996;
+}
