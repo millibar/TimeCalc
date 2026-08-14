@@ -28,7 +28,7 @@ type ButtonLabel =
   | '7' | '8' | '9' | '×'
   | '4' | '5' | '6' | '−'
   | '1' | '2' | '3' | '+'
-  | '0' | '：' | '．' | '='
+  | '0' | '：' | '.' | '='
 
 /** ボタンを1つ押す。'0' と '00' のような部分一致を避けるため exact: true を使う。 */
 async function press(page: Page, label: ButtonLabel) {

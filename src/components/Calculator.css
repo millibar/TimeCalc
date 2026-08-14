@@ -112,6 +112,11 @@
   background: var(--color-key-bg-active);
 }
 
+.key.decimal {
+  /* 半角「.」は他のキーの文字に比べて視覚的に小さく見えるため、表示上だけ拡大する */
+  font-size: clamp(1.5rem, 8vw, 2rem);
+}
+
 .key.op {
   background: var(--color-key-op-bg);
   color: var(--color-key-op-text);
