@@ -63,3 +63,13 @@ npm run dev でサーバーを起動したので、Playwright MCPで http://loca
 
 - `@playwright/mcp` が依存する `playwright` のバージョンと、`postCreateCommand` の `npx -y playwright install` でダウンロードされるブラウザのバージョンがズレると、MCP経由の操作で `Executable doesn't exist` エラーになることがある（`@playwright/mcp` は先行版のPlaywrightに依存することがあるため）。その場合は `npx -y playwright install chromium` を再実行してブラウザキャッシュを最新化する。
 - devcontainerのベースイメージは Debian 12 (bookworm) 。旧 Debian 11 (bullseye) では、最新のPlaywrightがChromiumのサポートを打ち切っており（`ERROR: Playwright does not support chromium on debian11-x64`）、`postCreateCommand` のブラウザインストールがそのままでは失敗するため bookworm に変更した。
+
+### 申し送り（次回セッションへ）
+
+- `feature/playwright-e2e` ブランチで、上記のPlaywright関連の変更（bookwormへのベースイメージ変更、`.mcp.json` のパッケージ名修正、本ドキュメントの追記）をコミット済み（コミット `a95235d`）。まだ `master` へはマージしていない。
+- ここまでの動作確認は、旧bullseyeコンテナ上でPlaywrightを `1.49.1` に固定した場合の手動検証のみ（Chromiumダウンロード〜`install-deps`〜ブラウザ起動〜ボタン操作〜結果表示確認は成功）。**bookwormベースイメージでの動作はまだ未検証**（Dockerfileを書き換えても実行中のコンテナはリビルドされないため、このセッション内では確認できなかった）。
+- ユーザーは「コンテナをリビルドしてから再開し、新しい環境でうまくいくか確認する」予定。次回セッション開始時は、以下を実施すること。
+  1. リビルド後のコンテナが実際に bookworm ベースになっているか（`cat /etc/os-release`）を確認。
+  2. `postCreateCommand` の `npx -y playwright install --with-deps chromium` が devcontainer 作成時に正常終了しているか（エラーなくChromiumがダウンロードされているか、`ls ~/.cache/ms-playwright/`）を確認。
+  3. `npm run dev` を起動し、Playwright MCP（`.mcp.json` の `@playwright/mcp`）経由で実際に画面操作・確認ができるかを試す（上記「基本の使い方」の例を参照）。
+  4. うまくいけば、この申し送り節の内容は削除してよい。うまくいかない場合は、発生したエラー内容に応じてこのファイルの記載を更新すること。
