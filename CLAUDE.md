@@ -54,10 +54,11 @@ npm run dev でサーバーを起動したので、Playwright MCPで http://loca
 `@playwright/mcp` は `npx -y @playwright/mcp@latest` として自前でPlaywright本体を解決するため、これも `package.json` へのインストールは不要。これが最も手軽で、`npm run dev` の実サーバーに対してボタン操作〜表示確認までを一通り検証できる。
 
 - ボタンのラベルは全角の `：`（コロン）`−`（マイナス）`×`（かける）`÷`（わる）なので、要素を指定する際はそれに合わせること（半角の `:` `-` `*` `/` では見つからない）。
+- `e2e/calculator.spec.ts` に、Playwright MCPで確認すべき代表的なシナリオ（基本の計算、負の時間、分未満の端数の下線表示、型エラー、`=` 後の続け計算・`⌫` での編集モード復帰、数式タップによるカーソル移動など）を `@playwright/test` 形式のテストコードとして書き出してある。今後Playwright MCPで動作確認する際は、まずこのファイルに載っているシナリオを一通りなぞり、新しい機能を確認したらこのファイルにも追記する。ただし `@playwright/test` は依存関係に追加していないため、このファイル自体は `npx playwright test` では実行できない（Vitestの対象からも `vite.config.ts` の `test.exclude` で除外している）——あくまでMCP操作のシナリオ台帳としての位置づけ。
 
 ### スクリプトとして自動化したい場合
 
-`npx playwright test` は `@playwright/test` が `node_modules` に無いと動かせず、`npx -p playwright ...` のようなその場限りのインストールでも `NODE_PATH` は通らないため `require`/`import` が解決できない（検証済み）。CIなどで繰り返し実行するテストを書くなら、素直に `npm install -D @playwright/test` して `package.json` に追加するのが最も確実。単発の動作確認だけなら、上記のPlaywright MCP経由でClaude Codeに直接操作してもらう方法で十分。
+`npx playwright test` は `@playwright/test` が `node_modules` に無いと動かせず、`npx -p playwright ...` のようなその場限りのインストールでも `NODE_PATH` は通らないため `require`/`import` が解決できない（検証済み）。CIなどで繰り返し実行するテストを書くなら、素直に `npm install -D @playwright/test` して `package.json` に追加するのが最も確実。単発の動作確認だけなら、上記のPlaywright MCP経由でClaude Codeに直接操作してもらう方法で十分。実際にCI化する場合は `e2e/calculator.spec.ts` がそのまま使えるはずなので、`vite.config.ts` の `test.exclude` から `e2e/**` を外すのを忘れないこと。
 
 ### 既知の注意点
 
@@ -66,3 +67,5 @@ npm run dev でサーバーを起動したので、Playwright MCPで http://loca
 - 新しいdevcontainerでは、`.mcp.json` に登録したプロジェクトスコープのMCPサーバー（`playwright`）が初回は未承認（`⏸ Pending approval`）状態になっていることがある。`claude mcp list` で確認でき、ペンディングのままだとそのセッションではPlaywright MCPのツールが使えない。承認は対話的な起動時プロンプトで行われ、一度承認すれば `~/.claude.json`（ホストの `~/.claude.json` がマウントされているため永続化される）に記録され、以後のセッションでは再度聞かれない。
 
 bookwormベースイメージ・Playwright MCP経由でのE2E動作確認済み（コミット `a95235d` の内容で、`1:30 + 3:45` → `=` → `5:15` の表示確認まで成功）。
+
+2026-08-14: `e2e/calculator.spec.ts` の各シナリオをPlaywright MCP（実Chromium）で1つずつ動作確認した上でテストコード化。

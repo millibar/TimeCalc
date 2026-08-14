@@ -75,6 +75,8 @@ npm run lint      # ESLint を実行
 
    ボタンのラベルは全角の `：` `−` `×` `÷` なので、要素を指定する際は半角記号ではなくこちらを使う。
 
+代表的な確認シナリオは [`e2e/calculator.spec.ts`](e2e/calculator.spec.ts) に `@playwright/test` 形式のテストコードとしてまとめてある。Playwright MCPで動作確認する際はこれを参考にする（`@playwright/test` は依存関係に追加していないため、このファイル自体は `npx playwright test` では実行できないリファレンス）。
+
 CIなどで自動テストとして繰り返し実行したい場合は、`npm install -D @playwright/test` して通常の Playwright Test プロジェクトとしてセットアップするのが確実（詳細は [`CLAUDE.md`](CLAUDE.md) を参照）。
 
 ## デプロイ
@@ -106,6 +108,8 @@ src/
     Calculator.css
   App.tsx
   main.tsx
+e2e/
+  calculator.spec.ts   # Playwright MCPでの動作確認シナリオ（リファレンス、npm testの対象外）
 ```
 
 - **`timeCalc.ts`**: `{ kind: 'time'; seconds }` / `{ kind: 'number'; value }` という型付きの値を扱う再帰下降パーサー兼評価器。演算子ごとに組み合わせ可能な型を検査し、不正な組み合わせは `TimeCalcError` を投げる。時間は常に秒で内部保持するため、表示が `H:MM` までの現状でも、計算途中の秒成分は失われない。
