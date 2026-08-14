@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate, formatNumber, formatTime, prettyCursorIndex, prettyFormula, TimeCalcError } from './timeCalc'
+import {
+  evaluate,
+  formatNumber,
+  formatTime,
+  formulaIndexFromPrettyIndex,
+  prettyCursorIndex,
+  prettyFormula,
+  TimeCalcError,
+} from './timeCalc'
 
 function evalTime(formula: string) {
   const v = evaluate(formula)
@@ -119,5 +127,31 @@ describe('prettyCursorIndex', () => {
   it('clamps a trailing operator position to the trimmed text length', () => {
     // '1:00+' -> '1:00 + ' -> trimmed to '1:00 +'
     expect(prettyCursorIndex('1:00+', 5)).toBe('1:00 +'.length)
+  })
+})
+
+describe('formulaIndexFromPrettyIndex', () => {
+  it('is the inverse of prettyCursorIndex when there is no spacing to add', () => {
+    expect(formulaIndexFromPrettyIndex('123', 0)).toBe(0)
+    expect(formulaIndexFromPrettyIndex('123', 2)).toBe(2)
+    expect(formulaIndexFromPrettyIndex('123', 3)).toBe(3)
+  })
+
+  it('resolves a tap inside a spaced-out operator to the nearer side', () => {
+    // '1+2' -> '1 + 2'（インデックス: 0='1'の前, 1='1'の後/空白の前, 4=空白の後/'2'の前, 5=末尾）
+    expect(formulaIndexFromPrettyIndex('1+2', 0)).toBe(0)
+    expect(formulaIndexFromPrettyIndex('1+2', 1)).toBe(1) // '1'の直後をタップ
+    expect(formulaIndexFromPrettyIndex('1+2', 2)).toBe(1) // '+'の左半分をタップ → '+'の前
+    expect(formulaIndexFromPrettyIndex('1+2', 3)).toBe(2) // '+'の右半分をタップ → '+'の後
+    expect(formulaIndexFromPrettyIndex('1+2', 4)).toBe(2) // '2'の直前をタップ
+    expect(formulaIndexFromPrettyIndex('1+2', 5)).toBe(3) // 末尾をタップ
+  })
+
+  it('round-trips through prettyCursorIndex for every cursor position', () => {
+    for (const formula of ['123', '1+2', '-3:00+1:00', '(-3:00+1:00)*2', '40:00/7*31']) {
+      for (let pos = 0; pos <= formula.length; pos++) {
+        expect(formulaIndexFromPrettyIndex(formula, prettyCursorIndex(formula, pos))).toBe(pos)
+      }
+    }
   })
 })
