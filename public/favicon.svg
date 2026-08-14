@@ -1,5 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#1e1e2e"/>
-  <circle cx="32" cy="32" r="22" fill="none" stroke="#a6e3a1" stroke-width="4"/>
-  <path d="M32 18v14l10 6" fill="none" stroke="#a6e3a1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- アイコン基本スタイル -->
+  <g fill="none" stroke="#3182CE" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 時計の外枠メインアーク -->
+    <path d="M 325 98 A 176 176 0 1 0 385 369" />
+    
+    <!-- 右側の外枠アーク -->
+    <path d="M 405 178 A 176 176 0 0 1 428 250" />
+    
+    <!-- プラス記号 (+) -->
+    <line x1="300" y1="140" x2="420" y2="140" />
+    <line x1="360" y1="80" x2="360" y2="200" />
+    
+    <!-- 時計の針 -->
+    <!-- 長針 (12時方向) -->
+    <line x1="250" y1="256" x2="250" y2="155" />
+    <!-- 短針 (8時方向) -->
+    <line x1="250" y1="256" x2="185" y2="294" />
+    
+    <!-- イコール記号 (=) -->
+    <line x1="310" y1="312" x2="410" y2="312" />
+    <line x1="310" y1="356" x2="410" y2="356" />
+  </g>
+  
+  <!-- 塗りつぶし部分（中心軸と文字盤のドット） -->
+  <g fill="#3182CE">
+    <!-- 中心軸 -->
+    <circle cx="250" cy="256" r="16" />
+    
+    <!-- インデックスドット -->
+    <circle cx="250" cy="124" r="9" />
+    <circle cx="184" cy="142" r="9" />
+    <circle cx="136" cy="190" r="9" />
+    <circle cx="118" cy="256" r="9" />
+    <circle cx="136" cy="322" r="9" />
+    <circle cx="184" cy="370" r="9" />
+    <circle cx="250" cy="388" r="9" />
+    <circle cx="382" cy="256" r="9" />
+  </g>
 </svg>
