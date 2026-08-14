@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { applyButton, initialState, type Button } from '../lib/calculatorInput'
-import { formatNumber, formatTime, prettyFormula } from '../lib/timeCalc'
+import { formatNumber, formatTime, prettyCursorIndex, prettyFormula } from '../lib/timeCalc'
 import './Calculator.css'
 
 function ResultDisplay({ state }: { state: ReturnType<typeof applyButton> }) {
@@ -25,36 +25,60 @@ function ResultDisplay({ state }: { state: ReturnType<typeof applyButton> }) {
   )
 }
 
-const KEYS: { label: string; btn: Button; className?: string }[][] = [
+/** 数式を整形した表示文字列の中に、点滅するカーソルを差し込んで描画する。 */
+function FormulaDisplay({ formula, cursorPos }: { formula: string; cursorPos: number }) {
+  const text = prettyFormula(formula)
+  const cursorIndex = prettyCursorIndex(formula, cursorPos)
+  const before = text.slice(0, cursorIndex)
+  const after = text.slice(cursorIndex)
+  return (
+    <div className="display-formula">
+      <span>{before}</span>
+      <span className="cursor" />
+      <span>{after}</span>
+    </div>
+  )
+}
+
+// □ は空欄（今後、小数点や「00」ボタンを追加する余地として予約）
+type Key = { label: string; btn: Button; className?: string } | null
+
+const KEYS: Key[][] = [
   [
     { label: 'AC', btn: { type: 'ac' }, className: 'ac' },
+    { label: '←', btn: { type: 'left' }, className: 'nav' },
+    { label: '→', btn: { type: 'right' }, className: 'nav' },
+    { label: '⌫', btn: { type: 'backspace' } },
+  ],
+  [
+    null,
     { label: '(', btn: { type: 'lparen' } },
     { label: ')', btn: { type: 'rparen' } },
-    { label: '⌫', btn: { type: 'backspace' } },
+    { label: '÷', btn: { type: 'op', op: '/' }, className: 'op' },
   ],
   [
     { label: '7', btn: { type: 'digit', d: '7' } },
     { label: '8', btn: { type: 'digit', d: '8' } },
     { label: '9', btn: { type: 'digit', d: '9' } },
-    { label: '÷', btn: { type: 'op', op: '/' }, className: 'op' },
+    { label: '×', btn: { type: 'op', op: '*' }, className: 'op' },
   ],
   [
     { label: '4', btn: { type: 'digit', d: '4' } },
     { label: '5', btn: { type: 'digit', d: '5' } },
     { label: '6', btn: { type: 'digit', d: '6' } },
-    { label: '×', btn: { type: 'op', op: '*' }, className: 'op' },
+    { label: '−', btn: { type: 'op', op: '-' }, className: 'op' },
   ],
   [
     { label: '1', btn: { type: 'digit', d: '1' } },
     { label: '2', btn: { type: 'digit', d: '2' } },
     { label: '3', btn: { type: 'digit', d: '3' } },
-    { label: '−', btn: { type: 'op', op: '-' }, className: 'op' },
+    { label: '+', btn: { type: 'op', op: '+' }, className: 'op' },
   ],
   [
     { label: '0', btn: { type: 'digit', d: '0' } },
-    { label: ':', btn: { type: 'colon' } },
+    { label: '：', btn: { type: 'colon' } },
+    null,
     { label: '=', btn: { type: 'equals' }, className: 'equals' },
-    { label: '+', btn: { type: 'op', op: '+' }, className: 'op' },
   ],
 ]
 
@@ -64,20 +88,24 @@ export default function Calculator() {
   return (
     <div className="calculator">
       <div className="display">
-        <div className="display-formula">{prettyFormula(state.formula) || ' '}</div>
+        <FormulaDisplay formula={state.formula} cursorPos={state.cursorPos} />
         <ResultDisplay state={state} />
       </div>
       <div className="keypad">
-        {KEYS.flat().map((k) => (
-          <button
-            key={k.label}
-            type="button"
-            className={`key${k.className ? ` ${k.className}` : ''}`}
-            onClick={() => setState((s) => applyButton(s, k.btn))}
-          >
-            {k.label}
-          </button>
-        ))}
+        {KEYS.flat().map((k, i) =>
+          k === null ? (
+            <div key={`blank-${i}`} className="key key-blank" aria-hidden="true" />
+          ) : (
+            <button
+              key={`key-${i}`}
+              type="button"
+              className={`key${k.className ? ` ${k.className}` : ''}`}
+              onClick={() => setState((s) => applyButton(s, k.btn))}
+            >
+              {k.label}
+            </button>
+          ),
+        )}
       </div>
     </div>
   )

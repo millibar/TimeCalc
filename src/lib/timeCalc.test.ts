@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate, formatNumber, formatTime, prettyFormula, TimeCalcError } from './timeCalc'
+import { evaluate, formatNumber, formatTime, prettyCursorIndex, prettyFormula, TimeCalcError } from './timeCalc'
 
 function evalTime(formula: string) {
   const v = evaluate(formula)
@@ -80,5 +80,32 @@ describe('prettyFormula', () => {
 
   it('keeps a unary minus after an open paren tight', () => {
     expect(prettyFormula('(-3:00+1:00)*2')).toBe('(-3:00 + 1:00) × 2')
+  })
+})
+
+describe('prettyCursorIndex', () => {
+  it('maps 1:1 when there is no spacing to add', () => {
+    expect(prettyCursorIndex('123', 0)).toBe(0)
+    expect(prettyCursorIndex('123', 2)).toBe(2)
+    expect(prettyCursorIndex('123', 3)).toBe(3)
+  })
+
+  it('shifts positions after a spaced-out operator', () => {
+    // '1+2' -> '1 + 2'
+    expect(prettyCursorIndex('1+2', 0)).toBe(0) // '1' の前
+    expect(prettyCursorIndex('1+2', 1)).toBe(1) // '1' の後、'+' の前
+    expect(prettyCursorIndex('1+2', 2)).toBe(4) // '+' の後、'2' の前
+    expect(prettyCursorIndex('1+2', 3)).toBe(5) // 末尾
+  })
+
+  it('keeps a leading unary minus tight against its value', () => {
+    // '-3:00+1:00' -> '-3:00 + 1:00'
+    expect(prettyCursorIndex('-3:00+1:00', 0)).toBe(0)
+    expect(prettyCursorIndex('-3:00+1:00', 1)).toBe(1)
+  })
+
+  it('clamps a trailing operator position to the trimmed text length', () => {
+    // '1:00+' -> '1:00 + ' -> trimmed to '1:00 +'
+    expect(prettyCursorIndex('1:00+', 5)).toBe('1:00 +'.length)
   })
 })
