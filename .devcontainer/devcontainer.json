@@ -25,6 +25,6 @@
     "source=${localEnv:HOME}/.claude.json,target=/home/node/.claude.json,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.ssh,target=/home/node/.ssh,type=bind"
   ],
-  "postCreateCommand": "mkdir -p /home/node/.local/bin && ln -snf /workspace_shared/.claude ./.claude && claude install",
+  "postCreateCommand": "mkdir -p /home/node/.local/bin && ln -snf /workspace_shared/.claude ./.claude && claude install && npm install && npx -y playwright install --with-deps chromium",
   "remoteUser": "node"
 }

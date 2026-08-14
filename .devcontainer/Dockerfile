@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye
+FROM mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm
 
 # Install required CLI tools for Claude Code
 RUN apt-get update && apt-get install -y \
