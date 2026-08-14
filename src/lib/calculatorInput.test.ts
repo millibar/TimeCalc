@@ -7,6 +7,7 @@ function press(state: CalcState, ...btns: Button[]): CalcState {
 
 const d = (s: string): Button[] => s.split('').map((c) => ({ type: 'digit', d: c }))
 const colon: Button = { type: 'colon' }
+const decimal: Button = { type: 'decimal' }
 const op = (o: '+' | '-' | '*' | '/'): Button => ({ type: 'op', op: o })
 const lparen: Button = { type: 'lparen' }
 const rparen: Button = { type: 'rparen' }
@@ -38,6 +39,44 @@ describe('applyButton', () => {
   it('blocks colon with no digits yet', () => {
     const s = press(initialState, colon)
     expect(s.formula).toBe('')
+  })
+
+  it('builds a decimal number and evaluates it', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('00'), op('*'), ...d('0'), decimal, ...d('5'), equals)
+    expect(s.formula).toBe('1:00*0.5')
+    expect(s.result).toEqual({ kind: 'time', seconds: 30 * 60 })
+  })
+
+  it('blocks a second decimal point within the same token', () => {
+    const s = press(initialState, ...d('0'), decimal, ...d('5'), decimal)
+    expect(s.formula).toBe('0.5')
+  })
+
+  it('blocks a decimal point with no digits yet', () => {
+    const s = press(initialState, decimal)
+    expect(s.formula).toBe('')
+  })
+
+  it('blocks mixing a decimal point with a colon in the same token', () => {
+    const s1 = press(initialState, ...d('1'), decimal, ...d('5'), colon)
+    expect(s1.formula).toBe('1.5')
+    const s2 = press(initialState, ...d('1'), colon, ...d('30'), decimal)
+    expect(s2.formula).toBe('1:30')
+  })
+
+  it('blocks equals on a trailing decimal point with no digits after it', () => {
+    const s = press(initialState, ...d('1'), decimal, equals)
+    expect(s.justEvaluated).toBe(false)
+    expect(s.formula).toBe('1.')
+  })
+
+  it('the 00 key inserts two zeros, same as pressing 0 twice', () => {
+    const s1 = press(initialState, ...d('1'), colon, ...d('00'))
+    const s2 = press(initialState, ...d('1'), colon, ...d('0'), ...d('0'))
+    expect(s1).toEqual(s2)
+    // 3桁目になる00は（0を1個ずつ押した場合と同様に）ブロックされる
+    const s3 = press(initialState, ...d('1'), colon, ...d('1'), ...d('00'))
+    expect(s3.formula).toBe('1:10')
   })
 
   it('allows a leading unary minus but not a double minus', () => {

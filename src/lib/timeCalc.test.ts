@@ -67,6 +67,18 @@ describe('evaluate', () => {
   it('rejects an incomplete minute component', () => {
     expect(() => evaluate('1:3+1:00')).toThrow(TimeCalcError)
   })
+
+  it('multiplies a time by a decimal number', () => {
+    expect(evalTime('1:00*0.5')).toEqual({ text: '0:30', hasSubMinute: false })
+  })
+
+  it('computes plain decimal arithmetic', () => {
+    expect(evalNumber('0.1+0.2')).toBe('0.3')
+  })
+
+  it('supports a leading unary minus on a decimal number', () => {
+    expect(evalNumber('-0.5+1')).toBe('0.5')
+  })
 })
 
 describe('prettyFormula', () => {

@@ -59,6 +59,11 @@ function tokenize(input: string): Token[] {
         const seconds = Number(hours) * 3600 + Number(minutes) * 60
         tokens.push({ type: 'time', seconds })
       } else {
+        // 小数点はプレーンな数値のみで使える（時間は H:MM 形式のみ）
+        if (input[i] === '.') {
+          i++
+          while (i < input.length && /\d/.test(input[i])) i++
+        }
         tokens.push({ type: 'number', value: Number(input.slice(start, i)) })
       }
       continue

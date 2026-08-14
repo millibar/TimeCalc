@@ -40,8 +40,8 @@ function FormulaDisplay({ formula, cursorPos }: { formula: string; cursorPos: nu
   )
 }
 
-// □ は空欄（今後、小数点や「00」ボタンを追加する余地として予約）
-type Key = { label: string; btn: Button; className?: string } | null
+// btn に配列を渡すと、その順にボタンを連続して押したものとして扱う（「00」を「0」2回として扱うなど）。
+type Key = { label: string; btn: Button | Button[]; className?: string } | null
 
 const KEYS: Key[][] = [
   [
@@ -51,7 +51,13 @@ const KEYS: Key[][] = [
     { label: '⌫', btn: { type: 'backspace' } },
   ],
   [
-    null,
+    {
+      label: '00',
+      btn: [
+        { type: 'digit', d: '0' },
+        { type: 'digit', d: '0' },
+      ],
+    },
     { label: '(', btn: { type: 'lparen' } },
     { label: ')', btn: { type: 'rparen' } },
     { label: '÷', btn: { type: 'op', op: '/' }, className: 'op' },
@@ -77,7 +83,7 @@ const KEYS: Key[][] = [
   [
     { label: '0', btn: { type: 'digit', d: '0' } },
     { label: '：', btn: { type: 'colon' } },
-    null,
+    { label: '．', btn: { type: 'decimal' } },
     { label: '=', btn: { type: 'equals' }, className: 'equals' },
   ],
 ]
@@ -100,7 +106,9 @@ export default function Calculator() {
               key={`key-${i}`}
               type="button"
               className={`key${k.className ? ` ${k.className}` : ''}`}
-              onClick={() => setState((s) => applyButton(s, k.btn))}
+              onClick={() =>
+                setState((s) => (Array.isArray(k.btn) ? k.btn : [k.btn]).reduce(applyButton, s))
+              }
             >
               {k.label}
             </button>
