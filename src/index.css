@@ -1,6 +1,71 @@
 :root {
   color-scheme: dark;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* カラーパレット（ダークモード / デフォルト）
+     Catppuccin Mocha ベース。ライトモードは下記 @media (prefers-color-scheme: light) で上書きする。 */
+  --color-bg: #1e1e2e;
+  --color-text: #cdd6f4;
+
+  --color-display-bg: #181825;
+  --color-formula-text: #9399b2;
+  --color-cursor: #cdd6f4;
+  --color-result-text: #cdd6f4;
+  --color-error: #f38ba8;
+  --color-sub-minute-underline: #f9e2af;
+
+  --color-key-bg: #313244;
+  --color-key-text: #cdd6f4;
+  --color-key-bg-active: #45475a;
+
+  --color-key-op-bg: #45475a;
+  --color-key-op-text: #89b4fa;
+  --color-key-op-bg-active: #585b70;
+
+  --color-key-equals-bg: #89b4fa;
+  --color-key-equals-text: #1e1e2e;
+  --color-key-equals-bg-active: #74a8f7;
+
+  --color-key-ac-bg: #f38ba8;
+  --color-key-ac-text: #1e1e2e;
+  --color-key-ac-bg-active: #ea7996;
+
+  --color-key-nav-text: #89b4fa;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    /* カラーパレット（ライトモード） 白とブルーを基調にした配色 */
+    --color-bg: #ffffff;
+    --color-text: #1c2b3a;
+
+    --color-display-bg: #eaf1fb;
+    --color-formula-text: #5b7290;
+    --color-cursor: #1c2b3a;
+    --color-result-text: #14213d;
+    --color-error: #d6304a;
+    --color-sub-minute-underline: #c8880a;
+
+    --color-key-bg: #eef3fa;
+    --color-key-text: #1c2b3a;
+    --color-key-bg-active: #dce6f5;
+
+    --color-key-op-bg: #dbe7fb;
+    --color-key-op-text: #2563eb;
+    --color-key-op-bg-active: #c7dbf7;
+
+    --color-key-equals-bg: #2f6fed;
+    --color-key-equals-text: #ffffff;
+    --color-key-equals-bg-active: #2557c7;
+
+    --color-key-ac-bg: #f0576a;
+    --color-key-ac-text: #ffffff;
+    --color-key-ac-bg-active: #d93d51;
+
+    --color-key-nav-text: #2563eb;
+  }
 }
 
 * {
@@ -11,8 +76,8 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: #1e1e2e;
-  color: #cdd6f4;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 #root {

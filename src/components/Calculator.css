@@ -12,7 +12,7 @@
 .display {
   flex: 1 1 auto;
   min-height: 0;
-  background: #181825;
+  background: var(--color-display-bg);
   border-radius: 16px;
   padding: 16px;
   display: flex;
@@ -27,7 +27,7 @@
 
 .display-formula {
   font-size: clamp(1.1rem, 5vw, 1.5rem);
-  color: #9399b2;
+  color: var(--color-formula-text);
   text-align: right;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -50,7 +50,7 @@
   width: 0;
   height: calc(1em - 2px);
   vertical-align: text-bottom;
-  outline: 1px solid #cdd6f4;
+  outline: 1px solid var(--color-cursor);
   animation: cursor-blink 1s step-end infinite;
 }
 
@@ -69,18 +69,18 @@
 .display-result {
   font-size: clamp(1.8rem, 9vw, 2.5rem);
   font-weight: 600;
-  color: #cdd6f4;
+  color: var(--color-result-text);
   text-align: right;
 }
 
 .display-result.is-error {
-  color: #f38ba8;
+  color: var(--color-error);
   font-size: 1.5rem;
 }
 
 .display-result .sub-minute {
   text-decoration: underline;
-  text-decoration-color: #f9e2af;
+  text-decoration-color: var(--color-sub-minute-underline);
   text-decoration-thickness: 3px;
   text-underline-offset: 4px;
 }
@@ -102,46 +102,46 @@
   padding: 0;
   border: none;
   border-radius: 12px;
-  background: #313244;
-  color: #cdd6f4;
+  background: var(--color-key-bg);
+  color: var(--color-key-text);
   cursor: pointer;
   transition: background-color 0.1s ease;
 }
 
 .key:active {
-  background: #45475a;
+  background: var(--color-key-bg-active);
 }
 
 .key.op {
-  background: #45475a;
-  color: #89b4fa;
+  background: var(--color-key-op-bg);
+  color: var(--color-key-op-text);
 }
 
 .key.op:active {
-  background: #585b70;
+  background: var(--color-key-op-bg-active);
 }
 
 .key.equals {
-  background: #89b4fa;
-  color: #1e1e2e;
+  background: var(--color-key-equals-bg);
+  color: var(--color-key-equals-text);
   font-weight: 600;
 }
 
 .key.equals:active {
-  background: #74a8f7;
+  background: var(--color-key-equals-bg-active);
 }
 
 .key.ac {
-  background: #f38ba8;
-  color: #1e1e2e;
+  background: var(--color-key-ac-bg);
+  color: var(--color-key-ac-text);
 }
 
 .key.ac:active {
-  background: #ea7996;
+  background: var(--color-key-ac-bg-active);
 }
 
 .key.nav {
-  color: #89b4fa;
+  color: var(--color-key-nav-text);
 }
 
 .key-blank {
