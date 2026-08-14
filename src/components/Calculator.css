@@ -41,6 +41,8 @@
      outline は0幅ボックスの上下にもはみ出して描かれるため、height をその分だけ
      詰めて全体の見た目の高さを 1em に保つ。 */
   display: inline-block;
+  position: relative;
+  top: -3px; /* text-bottom は文字のディセンダー分だけ下に余白ができるので、見た目だけ少し上に補正する */
   width: 0;
   height: calc(1em - 2px);
   vertical-align: text-bottom;
