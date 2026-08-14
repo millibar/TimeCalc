@@ -3,6 +3,17 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Vitest のデフォルト exclude（vitest/config の defaultExclude と同じ内容）。
+// vitest/config から import すると、上の triple-slash-reference と重複するとして
+// ESLint（@typescript-eslint/triple-slash-reference）にエラーにされるため、直値で複製している。
+const vitestDefaultExclude = [
+  '**/node_modules/**',
+  '**/dist/**',
+  '**/cypress/**',
+  '**/.{idea,git,cache,output,temp}/**',
+  '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*',
+]
+
 export default defineConfig({
   base: '/TimeCalc/',
   plugins: [
@@ -42,5 +53,8 @@ export default defineConfig({
   ],
   test: {
     environment: 'node',
+    // e2e/ は @playwright/test を前提にしたリファレンス用テストコード（Playwright MCP用の
+    // シナリオ台帳）で、@playwright/test を依存関係に追加していないため Vitest の対象からは除外する。
+    exclude: [...vitestDefaultExclude, 'e2e/**'],
   },
 })
