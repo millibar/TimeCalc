@@ -11,6 +11,9 @@ const op = (o: '+' | '-' | '*' | '/'): Button => ({ type: 'op', op: o })
 const lparen: Button = { type: 'lparen' }
 const rparen: Button = { type: 'rparen' }
 const backspace: Button = { type: 'backspace' }
+const left: Button = { type: 'left' }
+const right: Button = { type: 'right' }
+const setCursor = (pos: number): Button => ({ type: 'setCursor', pos })
 const equals: Button = { type: 'equals' }
 const ac: Button = { type: 'ac' }
 
@@ -107,5 +110,94 @@ describe('applyButton', () => {
     const s1 = press(initialState, ...d('1'), colon, ...d('00'), op('+'), ...d('1'), colon, ...d('00'), equals)
     const s2 = press(s1, ac)
     expect(s2).toEqual(initialState)
+  })
+
+  it('cursor tracks the end of the formula while typing normally', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'))
+    expect(s.cursorPos).toBe(s.formula.length)
+  })
+})
+
+describe('cursor movement', () => {
+  it('moves left and right, clamped to the formula bounds', () => {
+    const s0 = press(initialState, ...d('123'))
+    expect(s0.cursorPos).toBe(3)
+    const s1 = press(s0, left, left)
+    expect(s1.cursorPos).toBe(1)
+    const s2 = press(s1, left, left, left) // 左端でクランプされる
+    expect(s2.cursorPos).toBe(0)
+    const s3 = press(s2, right, right, right, right, right) // 右端でクランプされる
+    expect(s3.cursorPos).toBe(3)
+  })
+
+  it('setCursor clamps to the formula bounds', () => {
+    const s0 = press(initialState, ...d('123'))
+    expect(press(s0, setCursor(1)).cursorPos).toBe(1)
+    expect(press(s0, setCursor(-5)).cursorPos).toBe(0)
+    expect(press(s0, setCursor(99)).cursorPos).toBe(3)
+  })
+})
+
+describe('editing in the middle of the formula', () => {
+  it('inserts a digit at the cursor, extending the token it sits inside', () => {
+    const s = press(initialState, ...d('13'), left, ...d('2'))
+    expect(s.formula).toBe('123')
+    expect(s.cursorPos).toBe(2)
+  })
+
+  it('inserts an hour digit before an existing colon', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'), setCursor(1), ...d('2'))
+    expect(s.formula).toBe('12:30')
+  })
+
+  it('blocks a second colon when the cursor sits before an existing one', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'), setCursor(1), colon)
+    expect(s.formula).toBe('1:30')
+  })
+
+  it('blocks a third minute digit inserted mid-token', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'), setCursor(3), ...d('9'))
+    expect(s.formula).toBe('1:30')
+  })
+
+  it('splits a number in two when an operator is inserted mid-token', () => {
+    const s = press(initialState, ...d('123'), left, op('+'))
+    expect(s.formula).toBe('12+3')
+  })
+
+  it('blocks an operator that would end up next to another operator', () => {
+    const s = press(initialState, ...d('1'), op('+'), ...d('2'), left, op('*'))
+    expect(s.formula).toBe('1+2')
+  })
+
+  it('backspaces the character to the left of the cursor', () => {
+    const s = press(initialState, ...d('123'), left, backspace)
+    expect(s.formula).toBe('13')
+    expect(s.cursorPos).toBe(1)
+  })
+
+  it('does nothing when backspacing at the very start', () => {
+    const s = press(initialState, ...d('123'), setCursor(0), backspace)
+    expect(s.formula).toBe('123')
+    expect(s.cursorPos).toBe(0)
+  })
+
+  it('inserts a paren pair around content via cursor movement', () => {
+    const s = press(initialState, ...d('1'), op('+'), ...d('2'), setCursor(0), lparen, right, right, right, rparen)
+    expect(s.formula).toBe('(1+2)')
+  })
+
+  it('blocks a digit right before an open paren (implicit multiplication)', () => {
+    const s = press(initialState, lparen, ...d('1'), rparen, setCursor(0), ...d('9'))
+    expect(s.formula).toBe('(1)')
+  })
+
+  it('lets the user resume editing with arrow keys right after equals', () => {
+    const s1 = press(initialState, ...d('1'), colon, ...d('00'), op('+'), ...d('2'), colon, ...d('00'), equals)
+    expect(s1.justEvaluated).toBe(true)
+    const s2 = press(s1, left, left, left, backspace) // '1:00+2:00' の '2' を消す
+    expect(s2.formula).toBe('1:00+:00')
+    expect(s2.justEvaluated).toBe(false)
+    expect(s2.error).toBeNull()
   })
 })

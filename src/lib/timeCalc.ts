@@ -237,9 +237,14 @@ export function formatNumber(value: number): string {
   return String(rounded)
 }
 
-/** ボタン入力で組み立てた数式文字列を、電卓表示用に ×÷ とスペースで整形する */
-export function prettyFormula(formula: string): string {
+/**
+ * prettyFormula の整形処理本体。
+ * indexMap[i] は「元の formula の i 文字目の直前」が、整形後の文字列（トリム前）の
+ * どの位置に対応するかを表す。カーソル位置の変換に使う。
+ */
+function buildPrettyFormula(formula: string): { text: string; indexMap: number[] } {
   let out = ''
+  const indexMap: number[] = [0]
   for (let i = 0; i < formula.length; i++) {
     const c = formula[i]
     if (c === '*' || c === '/') {
@@ -251,6 +256,24 @@ export function prettyFormula(formula: string): string {
     } else {
       out += c
     }
+    indexMap.push(out.length)
   }
-  return out.replace(/\s+/g, ' ').trim()
+  return { text: out.replace(/\s+/g, ' ').trim(), indexMap }
+}
+
+/** ボタン入力で組み立てた数式文字列を、電卓表示用に ×÷ とスペースで整形する */
+export function prettyFormula(formula: string): string {
+  return buildPrettyFormula(formula).text
+}
+
+/**
+ * 元の formula 文字列上のカーソル位置（cursorPos 文字目の直前）を、
+ * prettyFormula() が返す整形後の表示文字列上の位置に変換する。
+ * 数式表示をタップしてカーソルを移動する機能を実装する際は、
+ * 逆方向（表示位置→formula 位置）の変換をこのマッピングを元に追加する想定。
+ */
+export function prettyCursorIndex(formula: string, cursorPos: number): number {
+  const { text, indexMap } = buildPrettyFormula(formula)
+  const clampedPos = Math.max(0, Math.min(cursorPos, formula.length))
+  return Math.min(indexMap[clampedPos], text.length)
 }

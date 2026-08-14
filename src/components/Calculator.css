@@ -29,7 +29,31 @@
   font-size: clamp(1.1rem, 5vw, 1.5rem);
   color: #9399b2;
   text-align: right;
-  white-space: normal;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.display-formula .cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin: 0 1px;
+  vertical-align: text-bottom;
+  background: #cdd6f4;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .display-formula .cursor {
+    animation: none;
+  }
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
 .display-result {
@@ -55,11 +79,11 @@
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .key {
-  aspect-ratio: 1.2 / 1;
+  aspect-ratio: 1.45 / 1;
   width: 100%;
   display: flex;
   align-items: center;
@@ -104,4 +128,13 @@
 
 .key.ac:active {
   background: #ea7996;
+}
+
+.key.nav {
+  color: #89b4fa;
+}
+
+.key-blank {
+  aspect-ratio: 1.45 / 1;
+  width: 100%;
 }
