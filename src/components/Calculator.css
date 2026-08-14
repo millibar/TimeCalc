@@ -31,6 +31,7 @@
   text-align: right;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  cursor: text; /* タップ/クリックでカーソル位置を移動できることを示す */
   /* .display の word-break: break-all は数式には適用しない。演算子の前後にスペースを
      入れている（prettyFormula）ので、通常の分かち書きルールで項の途中を避けて折り返せる。
      1つの項単体が行に収まらないほど長い場合の保険として overflow-wrap: break-word は残す。 */

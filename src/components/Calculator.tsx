@@ -1,7 +1,47 @@
-import { useState } from 'react'
+import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { applyButton, initialState, type Button } from '../lib/calculatorInput'
-import { formatNumber, formatTime, prettyCursorIndex, prettyFormula } from '../lib/timeCalc'
+import {
+  formatNumber,
+  formatTime,
+  formulaIndexFromPrettyIndex,
+  prettyCursorIndex,
+  prettyFormula,
+} from '../lib/timeCalc'
 import './Calculator.css'
+
+/**
+ * 数式表示エリア上のタップ位置（クライアント座標）から、その地点に最も近い
+ * 文字境界を求め、prettyFormula() の表示文字列上でのインデックスとして返す。
+ * caretRangeFromPoint / caretPositionFromPoint が使えない環境では null を返す。
+ */
+function prettyIndexAtPoint(root: HTMLElement, clientX: number, clientY: number): number | null {
+  const doc = root.ownerDocument as Document & {
+    caretRangeFromPoint?: (x: number, y: number) => Range | null
+    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
+  }
+  let node: Node | null = null
+  let offset = 0
+  if (doc.caretRangeFromPoint) {
+    const range = doc.caretRangeFromPoint(clientX, clientY)
+    if (!range) return null
+    node = range.startContainer
+    offset = range.startOffset
+  } else if (doc.caretPositionFromPoint) {
+    const pos = doc.caretPositionFromPoint(clientX, clientY)
+    if (!pos) return null
+    node = pos.offsetNode
+    offset = pos.offset
+  } else {
+    return null
+  }
+  if (!root.contains(node)) return null
+  // root の先頭から (node, offset) までを Range で切り取り、その文字列長を数えることで
+  // 要素の入れ子（before/cursor/after の span）に関係なく文字インデックスに変換できる。
+  const measureRange = doc.createRange()
+  measureRange.setStart(root, 0)
+  measureRange.setEnd(node, offset)
+  return measureRange.toString().length
+}
 
 function ResultDisplay({ state }: { state: ReturnType<typeof applyButton> }) {
   if (state.error) {
@@ -26,13 +66,31 @@ function ResultDisplay({ state }: { state: ReturnType<typeof applyButton> }) {
 }
 
 /** 数式を整形した表示文字列の中に、点滅するカーソルを差し込んで描画する。 */
-function FormulaDisplay({ formula, cursorPos }: { formula: string; cursorPos: number }) {
+function FormulaDisplay({
+  formula,
+  cursorPos,
+  onTap,
+}: {
+  formula: string
+  cursorPos: number
+  onTap: (formulaPos: number) => void
+}) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const text = prettyFormula(formula)
   const cursorIndex = prettyCursorIndex(formula, cursorPos)
   const before = text.slice(0, cursorIndex)
   const after = text.slice(cursorIndex)
+
+  function handleClick(e: ReactMouseEvent<HTMLDivElement>) {
+    const root = rootRef.current
+    if (!root) return
+    const prettyIndex = prettyIndexAtPoint(root, e.clientX, e.clientY)
+    if (prettyIndex === null) return
+    onTap(formulaIndexFromPrettyIndex(formula, prettyIndex))
+  }
+
   return (
-    <div className="display-formula">
+    <div className="display-formula" ref={rootRef} onClick={handleClick}>
       <span>{before}</span>
       <span className="cursor" />
       <span>{after}</span>
@@ -94,7 +152,11 @@ export default function Calculator() {
   return (
     <div className="calculator">
       <div className="display">
-        <FormulaDisplay formula={state.formula} cursorPos={state.cursorPos} />
+        <FormulaDisplay
+          formula={state.formula}
+          cursorPos={state.cursorPos}
+          onTap={(pos) => setState((s) => applyButton(s, { type: 'setCursor', pos }))}
+        />
         <ResultDisplay state={state} />
       </div>
       <div className="keypad">

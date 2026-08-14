@@ -282,3 +282,25 @@ export function prettyCursorIndex(formula: string, cursorPos: number): number {
   const clampedPos = Math.max(0, Math.min(cursorPos, formula.length))
   return Math.min(indexMap[clampedPos], text.length)
 }
+
+/**
+ * prettyCursorIndex() の逆変換。表示文字列（prettyFormula()の結果）上の位置から、
+ * 元の formula 文字列上のカーソル位置を求める。数式表示のタップでカーソルを
+ * 移動する機能向け。indexMap は formula の文字数ぶんの単調増加列なので、
+ * prettyIndex に最も近い位置を素直に探せばよい（同じ距離なら手前を優先）。
+ */
+export function formulaIndexFromPrettyIndex(formula: string, prettyIndex: number): number {
+  const { text, indexMap } = buildPrettyFormula(formula)
+  const clampedTarget = Math.max(0, Math.min(prettyIndex, text.length))
+  let best = 0
+  let bestDist = Infinity
+  for (let i = 0; i < indexMap.length; i++) {
+    const pos = Math.min(indexMap[i], text.length)
+    const dist = Math.abs(pos - clampedTarget)
+    if (dist < bestDist) {
+      bestDist = dist
+      best = i
+    }
+  }
+  return best
+}
