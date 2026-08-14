@@ -10,6 +10,7 @@ import { evaluate, formatNumber, formatTime, TimeCalcError, type Value } from '.
 export type Button =
   | { type: 'digit'; d: string }
   | { type: 'colon' }
+  | { type: 'decimal' }
   | { type: 'op'; op: '+' | '-' | '*' | '/' }
   | { type: 'lparen' }
   | { type: 'rparen' }
@@ -45,19 +46,19 @@ function isOperatorChar(c: string | undefined): boolean {
 
 function isCompleteToken(tok: string): boolean {
   if (tok === '') return true
-  return /^-?\d+$/.test(tok) || /^-?\d+:\d{2}$/.test(tok)
+  return /^-?\d+$/.test(tok) || /^-?\d+:\d{2}$/.test(tok) || /^-?\d+\.\d+$/.test(tok)
 }
 
-/** 入力途中のトークンとして許される形（空文字列・符号のみ・時分の途中入力も含む）か */
+/** 入力途中のトークンとして許される形（空文字列・符号のみ・時分や小数の途中入力も含む）か */
 function isValidInProgressToken(tok: string): boolean {
-  return /^-?\d*(:\d{0,2})?$/.test(tok)
+  return /^-?\d*(:\d{0,2}|\.\d*)?$/.test(tok)
 }
 
 /** カーソルの左側で「入力中」の値トークンを取り出す（単項マイナス符号を含む）。 */
 function getTrailingToken(before: string): string {
   const i = before.length
   let j = i
-  while (j > 0 && /[\d:]/.test(before[j - 1])) j--
+  while (j > 0 && /[\d:.]/.test(before[j - 1])) j--
   let start = j
   if (j > 0 && before[j - 1] === '-') {
     const c = before[j - 2]
@@ -70,7 +71,7 @@ function getTrailingToken(before: string): string {
 
 /** カーソルの右側にある「入力中」の値トークンの先頭部分を取り出す。 */
 function getLeadingToken(after: string): string {
-  return /^[\d:]*/.exec(after)?.[0] ?? ''
+  return /^[\d:.]*/.exec(after)?.[0] ?? ''
 }
 
 function unmatchedOpenParens(s: string): number {
@@ -134,7 +135,17 @@ export function applyButton(stateIn: CalcState, btn: Button): CalcState {
       const leading = getLeadingToken(after)
       const digitsOnly = trailing.replace('-', '')
       if (digitsOnly === '' || trailing.includes(':') || leading.includes(':')) return state
+      if (trailing.includes('.') || leading.includes('.')) return state // 小数とは混在不可
       return insertAt(state, ':')
+    }
+
+    case 'decimal': {
+      const trailing = getTrailingToken(before)
+      const leading = getLeadingToken(after)
+      const digitsOnly = trailing.replace('-', '')
+      if (digitsOnly === '' || trailing.includes('.') || leading.includes('.')) return state
+      if (trailing.includes(':') || leading.includes(':')) return state // 時分表記とは混在不可
+      return insertAt(state, '.')
     }
 
     case 'op': {
