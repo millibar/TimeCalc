@@ -22,6 +22,12 @@ TimeCalc is a calculator-style PWA for evaluating expressions that mix time dura
 - Both `src/lib/*.ts` files have Vitest coverage (`*.test.ts`) exercising the worked examples from the spec (sign handling, mixed-type errors, division by zero, sub-minute rounding, etc.) and the button-input edge cases.
 - PWA config (manifest, icons, service worker via `vite-plugin-pwa`) lives in `vite.config.ts`; icon source SVGs are not kept in the repo, only the generated PNGs under `public/icons/`.
 
+## 開発ワークフロー
+
+- 新しく機能を開発する際は、必ず新しいブランチを作成し、その中で作業すること。
+- `master` ブランチに直接コミットしない。
+- テストが通り、かつユーザーの確認が済んでから `master` ブランチにマージすること。
+
 ## Known limitations / future work
 
 - Seconds input/display is intentionally not exposed in the UI yet (per spec), though the engine already carries sub-minute precision through calculations.
