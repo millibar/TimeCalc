@@ -60,6 +60,22 @@ npm test          # ユニットテストを実行
 npm run lint      # ESLint を実行
 ```
 
+## E2Eテスト（Playwright）
+
+`playwright` は `package.json` に依存関係として追加していない。devcontainer利用時は `postCreateCommand` でChromiumがあらかじめキャッシュされているため、追加インストールなしでE2E確認ができる。
+
+1. `npm run dev` で開発サーバーを起動する。
+2. Claude Codeに、Playwright MCP（`.mcp.json` に設定済み）を使って画面を操作・確認するよう依頼する。
+
+   ```
+   npm run dev でサーバーを起動したので、Playwright MCPで http://localhost:5173/TimeCalc/ を開いて
+   「1:30 + 3:45」を入力し「=」を押した結果が 5:15 になることを確認して
+   ```
+
+   ボタンのラベルは全角の `：` `−` `×` `÷` なので、要素を指定する際は半角記号ではなくこちらを使う。
+
+CIなどで自動テストとして繰り返し実行したい場合は、`npm install -D @playwright/test` して通常の Playwright Test プロジェクトとしてセットアップするのが確実（詳細は [`CLAUDE.md`](CLAUDE.md) を参照）。
+
 ## デプロイ
 
 `master` ブランチに push すると、GitHub Actions（[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)）が自動的に以下を実行し、GitHub Pages に公開します。

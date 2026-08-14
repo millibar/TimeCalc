@@ -35,5 +35,31 @@ TimeCalc is a calculator-style PWA for evaluating expressions that mix time dura
 
 ## Dev environment
 
-- `.devcontainer/Dockerfile` — based on `mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye` (Node 20), with `ripgrep`, `curl`, `git`, and `@anthropic-ai/claude-code` installed globally.
-- `.devcontainer/devcontainer.json` — mounts a shared `.claude` config directory from the host (`~/workspace/.claude`) into the container at `/workspace_shared/.claude`, then symlinks it to `./.claude` via `postCreateCommand`. It also mounts the host's `~/.claude.json` into the container.
+- `.devcontainer/Dockerfile` — based on `mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm` (Node 20), with `ripgrep`, `curl`, `git`, and `@anthropic-ai/claude-code` installed globally.
+- `.devcontainer/devcontainer.json` — mounts a shared `.claude` config directory from the host (`~/workspace/.claude`) into the container at `/workspace_shared/.claude`, then symlinks it to `./.claude` via `postCreateCommand`. It also mounts the host's `~/.claude.json` into the container. `postCreateCommand` also runs `npx -y playwright install --with-deps chromium` so the E2E setup below works out of the box, without adding `playwright`/`@playwright/test` to `package.json`.
+
+## PlaywrightによるE2Eテスト
+
+`playwright` / `@playwright/test` は `package.json` の依存関係には追加していない。ブラウザ本体（Chromium）は devcontainer 作成時に `postCreateCommand` の `npx -y playwright install --with-deps chromium` で一度だけダウンロード・キャッシュされる（`~/.cache/ms-playwright/`）ので、devcontainerが起動していればセットアップなしでE2E確認ができる。
+
+### 基本の使い方（推奨・追加インストール不要）
+
+`.mcp.json` に Playwright MCP サーバー（`@playwright/mcp`）を登録済み。`npm run dev` で開発サーバーを起動した状態で、Claude Codeに次のように依頼すると、Playwright MCP経由で実ブラウザ（Chromium）を操作して画面を確認できる。
+
+```
+npm run dev でサーバーを起動したので、Playwright MCPで http://localhost:5173/TimeCalc/ を開いて
+「1:30 + 3:45」を入力し「=」を押した結果が 5:15 になることを確認して
+```
+
+`@playwright/mcp` は `npx -y @playwright/mcp@latest` として自前でPlaywright本体を解決するため、これも `package.json` へのインストールは不要。これが最も手軽で、`npm run dev` の実サーバーに対してボタン操作〜表示確認までを一通り検証できる。
+
+- ボタンのラベルは全角の `：`（コロン）`−`（マイナス）`×`（かける）`÷`（わる）なので、要素を指定する際はそれに合わせること（半角の `:` `-` `*` `/` では見つからない）。
+
+### スクリプトとして自動化したい場合
+
+`npx playwright test` は `@playwright/test` が `node_modules` に無いと動かせず、`npx -p playwright ...` のようなその場限りのインストールでも `NODE_PATH` は通らないため `require`/`import` が解決できない（検証済み）。CIなどで繰り返し実行するテストを書くなら、素直に `npm install -D @playwright/test` して `package.json` に追加するのが最も確実。単発の動作確認だけなら、上記のPlaywright MCP経由でClaude Codeに直接操作してもらう方法で十分。
+
+### 既知の注意点
+
+- `@playwright/mcp` が依存する `playwright` のバージョンと、`postCreateCommand` の `npx -y playwright install` でダウンロードされるブラウザのバージョンがズレると、MCP経由の操作で `Executable doesn't exist` エラーになることがある（`@playwright/mcp` は先行版のPlaywrightに依存することがあるため）。その場合は `npx -y playwright install chromium` を再実行してブラウザキャッシュを最新化する。
+- devcontainerのベースイメージは Debian 12 (bookworm) 。旧 Debian 11 (bullseye) では、最新のPlaywrightがChromiumのサポートを打ち切っており（`ERROR: Playwright does not support chromium on debian11-x64`）、`postCreateCommand` のブラウザインストールがそのままでは失敗するため bookworm に変更した。
