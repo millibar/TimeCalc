@@ -141,7 +141,7 @@ const KEYS: Key[][] = [
   [
     { label: '0', btn: { type: 'digit', d: '0' } },
     { label: '：', btn: { type: 'colon' } },
-    { label: '．', btn: { type: 'decimal' } },
+    { label: '.', btn: { type: 'decimal' }, className: 'decimal' },
     { label: '=', btn: { type: 'equals' }, className: 'equals' },
   ],
 ]
