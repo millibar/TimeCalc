@@ -35,12 +35,16 @@
 }
 
 .display-formula .cursor {
+  /* width: 0 + outline でカーソルを描画する。outline はレイアウト幅に影響しないため、
+     カーソルの位置（＝どの文字とどの文字の間か）が変わっても前後の文字列の描画幅が
+     ぶれず、カーソル移動時に入力済みの文字がずれない。
+     outline は0幅ボックスの上下にもはみ出して描かれるため、height をその分だけ
+     詰めて全体の見た目の高さを 1em に保つ。 */
   display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin: 0 1px;
+  width: 0;
+  height: calc(1em - 2px);
   vertical-align: text-bottom;
-  background: #cdd6f4;
+  outline: 1px solid #cdd6f4;
   animation: cursor-blink 1s step-end infinite;
 }
 
