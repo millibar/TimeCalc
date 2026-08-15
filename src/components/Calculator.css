@@ -78,9 +78,9 @@
   font-size: 1.5rem;
 }
 
-.display-result .sub-minute {
+.display-result .sub-second {
   text-decoration: underline;
-  text-decoration-color: var(--color-sub-minute-underline);
+  text-decoration-color: var(--color-sub-second-underline);
   text-decoration-thickness: 3px;
   text-underline-offset: 4px;
 }

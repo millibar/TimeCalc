@@ -23,19 +23,19 @@ function evalNumber(formula: string) {
 
 describe('evaluate', () => {
   it('adds two times', () => {
-    expect(evalTime('1:30+3:45')).toEqual({ text: '5:15', hasSubMinute: false })
+    expect(evalTime('1:30+3:45')).toEqual({ text: '5:15', hasSubSecond: false })
   })
 
   it('subtracts two times into a negative result', () => {
-    expect(evalTime('2:59-3:00')).toEqual({ text: '-0:01', hasSubMinute: false })
+    expect(evalTime('2:59-3:00')).toEqual({ text: '-0:01', hasSubSecond: false })
   })
 
   it('multiplies a time by a number', () => {
-    expect(evalTime('0:15*4')).toEqual({ text: '1:00', hasSubMinute: false })
+    expect(evalTime('0:15*4')).toEqual({ text: '1:00', hasSubSecond: false })
   })
 
   it('divides a time by a number', () => {
-    expect(evalTime('3:00/2')).toEqual({ text: '1:30', hasSubMinute: false })
+    expect(evalTime('3:00/2')).toEqual({ text: '1:30', hasSubSecond: false })
   })
 
   it('divides a time by a time into a plain number', () => {
@@ -46,14 +46,29 @@ describe('evaluate', () => {
     expect(evalNumber('(5-3)*(1+4)')).toBe('10')
   })
 
-  it('handles mixed time/number/parens with a sub-minute remainder', () => {
+  it('handles mixed time/number/parens with a sub-second remainder', () => {
     const result = evalTime('40:00/7*31')
-    expect(result.text).toBe('177:08')
-    expect(result.hasSubMinute).toBe(true)
+    expect(result.text).toBe('177:08:34')
+    expect(result.hasSubSecond).toBe(true)
+  })
+
+  it('shows H:MM:SS with the seconds underlined even when the rounded seconds are 0', () => {
+    // 0:00:01 を7で割った端数（秒未満）が乗るが、丸めた合計秒はちょうど 3:00:00 になる
+    const result = evalTime('3:00:00+0:00:01/7')
+    expect(result.text).toBe('3:00:00')
+    expect(result.hasSubSecond).toBe(true)
+  })
+
+  it('parses and mixes H:MM and H:MM:SS in the same formula', () => {
+    expect(evalTime('1:30+0:00:45')).toEqual({ text: '1:30:45', hasSubSecond: false })
+  })
+
+  it('rejects an incomplete second component', () => {
+    expect(() => evaluate('1:30:5+1:00')).toThrow(TimeCalcError)
   })
 
   it('supports leading unary minus on a time', () => {
-    expect(evalTime('-1:00+2:30')).toEqual({ text: '1:30', hasSubMinute: false })
+    expect(evalTime('-1:00+2:30')).toEqual({ text: '1:30', hasSubSecond: false })
   })
 
   it('rejects mixing time and number with +', () => {
@@ -77,7 +92,7 @@ describe('evaluate', () => {
   })
 
   it('multiplies a time by a decimal number', () => {
-    expect(evalTime('1:00*0.5')).toEqual({ text: '0:30', hasSubMinute: false })
+    expect(evalTime('1:00*0.5')).toEqual({ text: '0:30', hasSubSecond: false })
   })
 
   it('computes plain decimal arithmetic', () => {

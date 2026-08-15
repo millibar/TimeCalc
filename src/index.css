@@ -12,7 +12,7 @@
   --color-cursor: #cdd6f4;
   --color-result-text: #cdd6f4;
   --color-error: #f38ba8;
-  --color-sub-minute-underline: #f9e2af;
+  --color-sub-second-underline: #f9e2af;
 
   --color-key-bg: #313244;
   --color-key-text: #cdd6f4;
@@ -46,7 +46,7 @@
     --color-cursor: #1c2b3a;
     --color-result-text: #14213d;
     --color-error: #d6304a;
-    --color-sub-minute-underline: #c8880a;
+    --color-sub-second-underline: #c8880a;
 
     --color-key-bg: #eef3fa;
     --color-key-text: #1c2b3a;
