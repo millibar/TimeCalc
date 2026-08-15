@@ -18,6 +18,7 @@ TimeCalc is a calculator-style PWA for evaluating expressions that mix time dura
 - `npm run preview` — serve the production build locally.
 - `npm test` — run the Vitest unit tests (`npm test -- --watch` to watch).
 - `npm run lint` — run ESLint.
+- `npm run test:e2e` — run the Playwright E2E tests (`e2e/calculator.spec.ts`) headless against a real Chromium; auto-starts `npm run dev` if it isn't already running (see `playwright.config.ts`).
 
 ## Architecture
 
@@ -42,13 +43,20 @@ TimeCalc is a calculator-style PWA for evaluating expressions that mix time dura
 ## Dev environment
 
 - `.devcontainer/Dockerfile` — based on `mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm` (Node 20), with `ripgrep`, `curl`, `git`, and `@anthropic-ai/claude-code` installed globally.
-- `.devcontainer/devcontainer.json` — mounts a shared `.claude` config directory from the host (`~/workspace/.claude`) into the container at `/workspace_shared/.claude`, then symlinks it to `./.claude` via `postCreateCommand`. It also mounts the host's `~/.claude.json` into the container. `postCreateCommand` also runs `npx -y playwright install --with-deps chromium` so the E2E setup below works out of the box, without adding `playwright`/`@playwright/test` to `package.json`.
+- `.devcontainer/devcontainer.json` — mounts a shared `.claude` config directory from the host (`~/workspace/.claude`) into the container at `/workspace_shared/.claude`, then symlinks it to `./.claude` via `postCreateCommand`. It also mounts the host's `~/.claude.json` into the container. `postCreateCommand` also runs `npx -y playwright install --with-deps chromium` so the E2E setup below (both `npm run test:e2e` and Playwright MCP) works out of the box without a separate browser install step.
 
 ## PlaywrightによるE2Eテスト
 
-`playwright` / `@playwright/test` は `package.json` の依存関係には追加していない。ブラウザ本体（Chromium）は devcontainer 作成時に `postCreateCommand` の `npx -y playwright install --with-deps chromium` で一度だけダウンロード・キャッシュされる（`~/.cache/ms-playwright/`）ので、devcontainerが起動していればセットアップなしでE2E確認ができる。
+`@playwright/test` は `package.json` の devDependencies に追加済み。ブラウザ本体（Chromium）は devcontainer 作成時に `postCreateCommand` の `npx -y playwright install --with-deps chromium` で一度だけダウンロード・キャッシュされる（`~/.cache/ms-playwright/`）ので、devcontainerが起動していればセットアップなしでE2Eが実行できる。
 
-### 基本の使い方（推奨・追加インストール不要）
+### `npm run test:e2e`（自動実行・推奨）
+
+`e2e/calculator.spec.ts` に、docs/spec.md（外部仕様書）の内容に沿ったシナリオを `@playwright/test` 形式のテストコードとして書いてある。`npm run test:e2e`（`playwright test`）でヘッドレスのChromiumに対して実行できる。`playwright.config.ts` の `webServer` 設定により、`npm run dev` が起動していなければ自動起動し（起動済みならそれを再利用する）、`http://localhost:5173/TimeCalc/` に対してテストする。
+
+- Vitest（`npm test`）はこのファイルを実行しない。`e2e/calculator.spec.ts` は `spec.ts` という名前でVitestのデフォルト対象パターンにも一致してしまうため、`vite.config.ts` の `test.exclude` で明示的に除外している（`@playwright/test` の `test()` はVitestのAPIと非互換のため、除外を外してはいけない）。
+- 機能を追加・変更したら、対応するシナリオをこのファイルにも追記し、`npm run test:e2e` で通ることを確認すること。
+
+### Playwright MCPでの手動確認（探索的な確認・スクリーンショット向け）
 
 `.mcp.json` に Playwright MCP サーバー（`@playwright/mcp`）を登録済み。`npm run dev` で開発サーバーを起動した状態で、Claude Codeに次のように依頼すると、Playwright MCP経由で実ブラウザ（Chromium）を操作して画面を確認できる。
 
@@ -57,17 +65,12 @@ npm run dev でサーバーを起動したので、Playwright MCPで http://loca
 「1:30 + 3:45」を入力し「=」を押した結果が 5:15 になることを確認して
 ```
 
-`@playwright/mcp` は `npx -y @playwright/mcp@latest` として自前でPlaywright本体を解決するため、これも `package.json` へのインストールは不要。これが最も手軽で、`npm run dev` の実サーバーに対してボタン操作〜表示確認までを一通り検証できる。
-
 - ボタンのラベルは全角の `：`（コロン）`−`（マイナス）`×`（かける）`÷`（わる）なので、要素を指定する際はそれに合わせること（半角の `:` `-` `*` `/` では見つからない）。
-- `e2e/calculator.spec.ts` に、Playwright MCPで確認すべき代表的なシナリオ（基本の計算、負の時間、分未満の端数の下線表示、型エラー、`=` 後の続け計算・`⌫` での編集モード復帰、数式タップによるカーソル移動など）を `@playwright/test` 形式のテストコードとして書き出してある。今後Playwright MCPで動作確認する際は、まずこのファイルに載っているシナリオを一通りなぞり、新しい機能を確認したらこのファイルにも追記する。ただし `@playwright/test` は依存関係に追加していないため、このファイル自体は `npx playwright test` では実行できない（Vitestの対象からも `vite.config.ts` の `test.exclude` で除外している）——あくまでMCP操作のシナリオ台帳としての位置づけ。
-
-### スクリプトとして自動化したい場合
-
-`npx playwright test` は `@playwright/test` が `node_modules` に無いと動かせず、`npx -p playwright ...` のようなその場限りのインストールでも `NODE_PATH` は通らないため `require`/`import` が解決できない（検証済み）。CIなどで繰り返し実行するテストを書くなら、素直に `npm install -D @playwright/test` して `package.json` に追加するのが最も確実。単発の動作確認だけなら、上記のPlaywright MCP経由でClaude Codeに直接操作してもらう方法で十分。実際にCI化する場合は `e2e/calculator.spec.ts` がそのまま使えるはずなので、`vite.config.ts` の `test.exclude` から `e2e/**` を外すのを忘れないこと。
+- 定型的な回帰確認は `npm run test:e2e` に任せ、MCPはUIを実際に目で見て確認したい場合（スクリーンショット、新機能の探索的な動作確認など）に使う。
 
 ### 既知の注意点
 
+- **この devcontainer には X サーバーが無く、Playwright MCP はデフォルトでheadedモードのChromeを起動しようとするため、`Missing X server or $DISPLAY` で失敗する（2026-08-15確認）。** MCP経由の画面確認をしたい場合は、Xサーバーの用意（`xvfb-run` 等）が必要。一方 `npx playwright test`（`npm run test:e2e`）はデフォルトでheadless実行のため、Xサーバーが無くても問題なく動く——CIや自動テストにはこちらを使う。
 - `@playwright/mcp` が依存する `playwright` のバージョンと、`postCreateCommand` の `npx -y playwright install` でダウンロードされるブラウザのバージョンがズレると、MCP経由の操作で `Executable doesn't exist` エラーになることがある（`@playwright/mcp` は先行版のPlaywrightに依存することがあるため）。その場合は `npx -y playwright install chromium` を再実行してブラウザキャッシュを最新化する。
 - devcontainerのベースイメージは Debian 12 (bookworm) 。旧 Debian 11 (bullseye) では、最新のPlaywrightがChromiumのサポートを打ち切っており（`ERROR: Playwright does not support chromium on debian11-x64`）、`postCreateCommand` のブラウザインストールがそのままでは失敗するため bookworm に変更した。
 - 新しいdevcontainerでは、`.mcp.json` に登録したプロジェクトスコープのMCPサーバー（`playwright`）が初回は未承認（`⏸ Pending approval`）状態になっていることがある。`claude mcp list` で確認でき、ペンディングのままだとそのセッションではPlaywright MCPのツールが使えない。承認は対話的な起動時プロンプトで行われ、一度承認すれば `~/.claude.json`（ホストの `~/.claude.json` がマウントされているため永続化される）に記録され、以後のセッションでは再度聞かれない。
@@ -75,3 +78,5 @@ npm run dev でサーバーを起動したので、Playwright MCPで http://loca
 bookwormベースイメージ・Playwright MCP経由でのE2E動作確認済み（コミット `a95235d` の内容で、`1:30 + 3:45` → `=` → `5:15` の表示確認まで成功）。
 
 2026-08-14: `e2e/calculator.spec.ts` の各シナリオをPlaywright MCP（実Chromium）で1つずつ動作確認した上でテストコード化。
+
+2026-08-15: `npm install -D @playwright/test` を実施し、`playwright.config.ts` を追加。`e2e/calculator.spec.ts` を docs/spec.md の内容に沿って書き直し、`npm run test:e2e`（ヘッドレスChromium、41シナリオ）で全件パスすることを確認済み。
