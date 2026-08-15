@@ -87,6 +87,17 @@ npm run dev でサーバーを起動したので、Playwright MCPで http://loca
 
 ボタンのラベルは全角の `：` `−` `×` `÷` なので、要素を指定する際は半角記号ではなくこちらを使う（詳細は [`CLAUDE.md`](CLAUDE.md) を参照）。
 
+## CI
+
+`master` への push と pull request のたびに、GitHub Actions（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）が以下を自動実行します。
+
+1. `npm run lint`
+2. `npm test`（ユニットテスト）
+3. `npm run build`
+4. `npm run test:e2e`（Playwright E2Eテスト）
+
+失敗時はPlaywrightのHTMLレポートがアーティファクトとしてアップロードされます。
+
 ## デプロイ
 
 `master` ブランチに push すると、GitHub Actions（[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)）が自動的に以下を実行し、GitHub Pages に公開します。

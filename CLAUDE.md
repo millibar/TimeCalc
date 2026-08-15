@@ -55,6 +55,7 @@ TimeCalc is a calculator-style PWA for evaluating expressions that mix time dura
 
 - Vitest（`npm test`）はこのファイルを実行しない。`e2e/calculator.spec.ts` は `spec.ts` という名前でVitestのデフォルト対象パターンにも一致してしまうため、`vite.config.ts` の `test.exclude` で明示的に除外している（`@playwright/test` の `test()` はVitestのAPIと非互換のため、除外を外してはいけない）。
 - 機能を追加・変更したら、対応するシナリオをこのファイルにも追記し、`npm run test:e2e` で通ることを確認すること。
+- `.github/workflows/ci.yml` により、`master` への push と pull request のたびに `npm run lint` → `npm test` → `npm run build` → `npm run test:e2e`（Chromium）が自動実行される。`playwright.config.ts` は `process.env.CI` を見て、CI上ではレポーターを `github`（ログにインライン注釈）+ `html`（失敗時にアーティファクトとしてアップロード）に切り替え、リトライを1回有効にする。デプロイ用の `.github/workflows/deploy.yml` とは別ワークフローで、デプロイ自体はCIの成否をブロッキングでは待たない。
 
 ### Playwright MCPでの手動確認（探索的な確認・スクリーンショット向け）
 
@@ -80,3 +81,5 @@ bookwormベースイメージ・Playwright MCP経由でのE2E動作確認済み�
 2026-08-14: `e2e/calculator.spec.ts` の各シナリオをPlaywright MCP（実Chromium）で1つずつ動作確認した上でテストコード化。
 
 2026-08-15: `npm install -D @playwright/test` を実施し、`playwright.config.ts` を追加。`e2e/calculator.spec.ts` を docs/spec.md の内容に沿って書き直し、`npm run test:e2e`（ヘッドレスChromium、41シナリオ）で全件パスすることを確認済み。
+
+2026-08-15: `.github/workflows/ci.yml` を追加し、lint・ユニットテスト・ビルド・E2Eテストを push / pull_request で自動実行するようにした。`CI=true npm run test:e2e` をローカルでも実行し、41件全てパス・`github`/`html` レポーターが正しく機能することを確認済み。
