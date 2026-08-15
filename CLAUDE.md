@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TimeCalc is a calculator-style PWA for evaluating expressions that mix time durations (`H:MM`) and plain numbers — e.g. `1:30 + 3:45`, `40:00 / 7 * 31`. Built with Vite + React + TypeScript.
 
+## 外部仕様書
+
+- ユーザーから見た振る舞い（画面構成、ボタン操作、入力ルール、計算ルール、表示形式、エラー表示など）は @docs/spec.md に定義されている。実装の詳細（コード構成）はこのファイルの「Architecture」節を参照。
+- **機能を追加する、または既存の仕様を変更する場合は、まず @docs/spec.md にその変更を反映し、ユーザーの承認を得てから実装に進むこと。** 実装を先に進めてはならない。
+
 ## Commands
 
 - `npm run dev` — start the Vite dev server.
@@ -24,6 +29,7 @@ TimeCalc is a calculator-style PWA for evaluating expressions that mix time dura
 
 ## 開発ワークフロー
 
+- 機能追加・仕様変更を行う際は、まず「外部仕様書」節の手順に従って @docs/spec.md を更新し、ユーザーの承認を得ること。承認前に実装を始めない。
 - 新しく機能を開発する際は、必ず新しいブランチを作成し、その中で作業すること。
 - `master` ブランチに直接コミットしない。
 - テストが通り、かつユーザーの確認が済んでから `master` ブランチにマージすること。
