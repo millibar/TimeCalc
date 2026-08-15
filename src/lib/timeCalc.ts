@@ -56,8 +56,20 @@ function tokenize(input: string): Token[] {
         if (minutes.length !== 2) {
           throw new TimeCalcError(`不正な時間表記です: ${input.slice(start, i)}`)
         }
-        const seconds = Number(hours) * 3600 + Number(minutes) * 60
-        tokens.push({ type: 'time', seconds })
+        let seconds = 0
+        if (input[i] === ':') {
+          // H:MM:SS — 秒は省略可
+          i++
+          const secondStart = i
+          while (i < input.length && /\d/.test(input[i])) i++
+          const secondsStr = input.slice(secondStart, i)
+          if (secondsStr.length !== 2) {
+            throw new TimeCalcError(`不正な時間表記です: ${input.slice(start, i)}`)
+          }
+          seconds = Number(secondsStr)
+        }
+        const totalSeconds = Number(hours) * 3600 + Number(minutes) * 60 + seconds
+        tokens.push({ type: 'time', seconds: totalSeconds })
       } else {
         // 小数点はプレーンな数値のみで使える（時間は H:MM 形式のみ）
         if (input[i] === '.') {
@@ -218,22 +230,29 @@ export function evaluate(formula: string): Value {
 }
 
 export interface FormattedTime {
-  /** 符号込みの "H:MM" 表示 */
+  /** 符号込みの "H:MM" または "H:MM:SS" 表示 */
   text: string
-  /** 分未満の端数（秒）が残っているか */
-  hasSubMinute: boolean
+  /** 秒未満の端数が残っているか */
+  hasSubSecond: boolean
 }
 
-/** 時間の合計秒数を "H:MM" 形式に整形する。分未満は最も近い秒に丸めて端数の有無を判定する。 */
+/**
+ * 時間の合計秒数を "H:MM"（秒が0かつ端数もない場合）または "H:MM:SS" 形式に整形する。
+ * 端数は最も近い秒に丸めて有無を判定し、端数がある場合は秒が0であっても "H:MM:SS" で表示する。
+ */
 export function formatTime(totalSeconds: number): FormattedTime {
   const rounded = Math.round(totalSeconds)
+  const hasSubSecond = rounded !== totalSeconds
   const sign = rounded < 0 ? '-' : ''
   const abs = Math.abs(rounded)
   const hours = Math.floor(abs / 3600)
   const minutes = Math.floor((abs % 3600) / 60)
   const seconds = abs % 60
-  const text = `${sign}${hours}:${String(minutes).padStart(2, '0')}`
-  return { text, hasSubMinute: seconds !== 0 }
+  const hm = `${sign}${hours}:${String(minutes).padStart(2, '0')}`
+  if (seconds === 0 && !hasSubSecond) {
+    return { text: hm, hasSubSecond: false }
+  }
+  return { text: `${hm}:${String(seconds).padStart(2, '0')}`, hasSubSecond }
 }
 
 export function formatNumber(value: number): string {

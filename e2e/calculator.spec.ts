@@ -41,7 +41,7 @@ async function readDisplay(page: Page) {
     formulaText: (await formula.textContent()) ?? '',
     resultText: (await result.textContent()) ?? '',
     isError: (await result.getAttribute('class'))?.includes('is-error') ?? false,
-    hasSubMinute: (await result.locator('.sub-minute').count()) > 0,
+    hasSubSecond: (await result.locator('.sub-second').count()) > 0,
   }
 }
 
@@ -118,19 +118,43 @@ test.describe('計算のルール（時間と数値の組み合わせ）', () =>
 })
 
 test.describe('表示形式', () => {
-  test('分未満の端数が残る結果は分の部分に下線が付く（40:00 ÷ 7 × 31 = 177:08）', async ({ page }) => {
-    const { formulaText, resultText, hasSubMinute } = await calculate(page, [
+  test('秒成分がある結果は H:MM:SS 形式で表示される（1:30:00 + 0:00:45 = 1:30:45）', async ({ page }) => {
+    const { formulaText, resultText } = await calculate(page, [
+      '1', '：', '3', '0', '：', '00', '+', '0', '：', '00', '：', '4', '5', '=',
+    ])
+    expect(formulaText).toBe('1:30:00 + 0:00:45')
+    expect(resultText).toBe('1:30:45')
+  })
+
+  test('秒成分が0の結果は H:MM 形式で表示される（1:30:00 + 0:00:00 = 1:30）', async ({ page }) => {
+    const { resultText } = await calculate(page, [
+      '1', '：', '3', '0', '：', '00', '+', '0', '：', '00', '：', '00', '=',
+    ])
+    expect(resultText).toBe('1:30')
+  })
+
+  test('秒未満の端数が残る結果は秒の部分に下線が付く（40:00 ÷ 7 × 31 = 177:08:34）', async ({ page }) => {
+    const { formulaText, resultText, hasSubSecond } = await calculate(page, [
       '4', '0', '：', '00', '÷', '7', '×', '3', '1', '=',
     ])
     expect(formulaText).toBe('40:00 ÷ 7 × 31')
-    expect(resultText).toBe('177:08')
-    expect(hasSubMinute).toBe(true)
+    expect(resultText).toBe('177:08:34')
+    expect(hasSubSecond).toBe(true)
   })
 
-  test('分未満の端数が無い結果には下線が付かない', async ({ page }) => {
-    const { resultText, hasSubMinute } = await calculate(page, ['1', '：', '0', '0', '÷', '2', '='])
+  test('秒未満の端数が無い結果には下線が付かない', async ({ page }) => {
+    const { resultText, hasSubSecond } = await calculate(page, ['1', '：', '0', '0', '÷', '2', '='])
     expect(resultText).toBe('0:30')
-    expect(hasSubMinute).toBe(false)
+    expect(hasSubSecond).toBe(false)
+  })
+
+  test('丸めた秒がちょうど0でも、秒未満の端数が残っていれば H:MM:SS 形式で秒に下線が付く', async ({ page }) => {
+    // 0:00:01 を7で割った端数が乗るが、丸めた合計は 3:00:00 になる
+    const { resultText, hasSubSecond } = await calculate(page, [
+      '3', '：', '00', '：', '00', '+', '0', '：', '00', '：', '0', '1', '÷', '7', '=',
+    ])
+    expect(resultText).toBe('3:00:00')
+    expect(hasSubSecond).toBe(true)
   })
 
   test('小数の数値は小数点以下も表示される（1 ÷ 3 = 0.333333）', async ({ page }) => {
@@ -189,10 +213,22 @@ test.describe('入力の妥当性チェック（誤入力の防止）', () => {
     expect(formulaText).toBe('5')
   })
 
-  test('1つの値の中に「：」を2つ以上入力することはできない', async ({ page }) => {
-    await calculate(page, ['1', '：', '3', '0', '：'])
+  test('「：」は1つの値の中に2つまで入力でき、秒まで指定した時間になる（1:30:05）', async ({ page }) => {
+    await calculate(page, ['1', '：', '3', '0', '：', '0', '5'])
     const { formulaText } = await readDisplay(page)
-    expect(formulaText).toBe('1:30')
+    expect(formulaText).toBe('1:30:05')
+  })
+
+  test('分の部分に数字が無い状態では2つ目の「：」を入力できない（秒だけの入力の禁止）', async ({ page }) => {
+    await calculate(page, ['1', '：', '：'])
+    const { formulaText } = await readDisplay(page)
+    expect(formulaText).toBe('1:')
+  })
+
+  test('1つの値の中に「：」を3つ以上入力することはできない', async ({ page }) => {
+    await calculate(page, ['1', '：', '3', '0', '：', '0', '5', '：'])
+    const { formulaText } = await readDisplay(page)
+    expect(formulaText).toBe('1:30:05')
   })
 
   test('時分の区切りと小数点は同じ値に混在できない', async ({ page }) => {

@@ -53,14 +53,15 @@ function ResultDisplay({ state }: { state: ReturnType<typeof applyButton> }) {
   if (state.result.kind === 'number') {
     return <div className="display-result">{formatNumber(state.result.value)}</div>
   }
-  const { text, hasSubMinute } = formatTime(state.result.seconds)
-  const match = /^(-?\d+:)(\d{2})$/.exec(text)
+  const { text, hasSubSecond } = formatTime(state.result.seconds)
+  if (!hasSubSecond) return <div className="display-result">{text}</div>
+  const match = /^(.*:)(\d{2})$/.exec(text)
   if (!match) return <div className="display-result">{text}</div>
-  const [, prefix, minutes] = match
+  const [, prefix, seconds] = match
   return (
     <div className="display-result">
       {prefix}
-      <span className={hasSubMinute ? 'sub-minute' : undefined}>{minutes}</span>
+      <span className="sub-second">{seconds}</span>
     </div>
   )
 }

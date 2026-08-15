@@ -46,12 +46,17 @@ function isOperatorChar(c: string | undefined): boolean {
 
 function isCompleteToken(tok: string): boolean {
   if (tok === '') return true
-  return /^-?\d+$/.test(tok) || /^-?\d+:\d{2}$/.test(tok) || /^-?\d+\.\d+$/.test(tok)
+  return (
+    /^-?\d+$/.test(tok) ||
+    /^-?\d+:\d{2}$/.test(tok) ||
+    /^-?\d+:\d{2}:\d{2}$/.test(tok) ||
+    /^-?\d+\.\d+$/.test(tok)
+  )
 }
 
-/** 入力途中のトークンとして許される形（空文字列・符号のみ・時分や小数の途中入力も含む）か */
+/** 入力途中のトークンとして許される形（空文字列・符号のみ・時分秒や小数の途中入力も含む）か */
 function isValidInProgressToken(tok: string): boolean {
-  return /^-?\d*(:\d{0,2}|\.\d*)?$/.test(tok)
+  return /^-?\d*(:\d{0,2}(:\d{0,2})?|\.\d*)?$/.test(tok)
 }
 
 /** カーソルの左側で「入力中」の値トークンを取り出す（単項マイナス符号を含む）。 */
@@ -133,9 +138,18 @@ export function applyButton(stateIn: CalcState, btn: Button): CalcState {
     case 'colon': {
       const trailing = getTrailingToken(before)
       const leading = getLeadingToken(after)
-      const digitsOnly = trailing.replace('-', '')
-      if (digitsOnly === '' || trailing.includes(':') || leading.includes(':')) return state
+      // カーソルより右に既に：がある位置（既存の区切りの手前）には挿入できない
+      if (leading.includes(':')) return state
       if (trailing.includes('.') || leading.includes('.')) return state // 小数とは混在不可
+      const parts = trailing.split(':')
+      if (parts.length > 2) return state // 3つ目の：は禁止（時・分・秒まで）
+      if (parts.length === 1) {
+        // 1つ目の：：直前（時の部分）に数字が必要
+        if (parts[0].replace('-', '') === '') return state
+      } else {
+        // 2つ目の：：直前（分の部分）に数字が必要
+        if (parts[1] === '') return state
+      }
       return insertAt(state, ':')
     }
 

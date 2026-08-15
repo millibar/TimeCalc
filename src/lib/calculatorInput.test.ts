@@ -26,14 +26,29 @@ describe('applyButton', () => {
     expect(s.error).toBeNull()
   })
 
-  it('blocks a second colon within the same token', () => {
-    const s = press(initialState, ...d('1'), colon, ...d('3'), colon)
-    expect(s.formula).toBe('1:3')
+  it('allows a second colon within the same token, forming H:MM:SS', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'), colon, ...d('05'))
+    expect(s.formula).toBe('1:30:05')
+  })
+
+  it('blocks a second colon with no minute digits yet', () => {
+    const s = press(initialState, ...d('1'), colon, colon)
+    expect(s.formula).toBe('1:')
+  })
+
+  it('blocks a third colon within the same token', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'), colon, ...d('05'), colon)
+    expect(s.formula).toBe('1:30:05')
   })
 
   it('blocks a third minute digit', () => {
     const s = press(initialState, ...d('1'), colon, ...d('305'))
     expect(s.formula).toBe('1:30')
+  })
+
+  it('blocks a third second digit', () => {
+    const s = press(initialState, ...d('1'), colon, ...d('30'), colon, ...d('305'))
+    expect(s.formula).toBe('1:30:30')
   })
 
   it('blocks colon with no digits yet', () => {
