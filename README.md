@@ -2,6 +2,8 @@
 
 電卓のように、時間数（`H:MM`）を含む数式を入力して計算できるPWAアプリです。
 
+ユーザーから見た振る舞い（画面構成・操作・計算ルール・表示形式など）の詳細な仕様は [`docs/spec.md`](docs/spec.md) を参照してください。
+
 例:
 
 ```
@@ -59,25 +61,31 @@ npm run build     # 型チェック + 本番ビルド（dist/ に出力）
 npm run preview   # 本番ビルドをローカルで確認
 npm test          # ユニットテストを実行
 npm run lint      # ESLint を実行
+npm run test:e2e  # E2Eテスト（Playwright）を実行
 ```
 
 ## E2Eテスト（Playwright）
 
-`playwright` は `package.json` に依存関係として追加していない。devcontainer利用時は `postCreateCommand` でChromiumがあらかじめキャッシュされているため、追加インストールなしでE2E確認ができる。
+`@playwright/test` を依存関係として追加済み。devcontainer利用時は `postCreateCommand` でChromiumがあらかじめキャッシュされているため、追加インストールなしでE2Eが実行できる。
 
-1. `npm run dev` で開発サーバーを起動する。
-2. Claude Codeに、Playwright MCP（`.mcp.json` に設定済み）を使って画面を操作・確認するよう依頼する。
+```bash
+npm run test:e2e
+```
 
-   ```
-   npm run dev でサーバーを起動したので、Playwright MCPで http://localhost:5173/TimeCalc/ を開いて
-   「1:30 + 3:45」を入力し「=」を押した結果が 5:15 になることを確認して
-   ```
+[`playwright.config.ts`](playwright.config.ts) の設定により、開発サーバーが起動していなければ自動的に `npm run dev` を起動する（起動済みならそれを再利用する）。テストシナリオは [`docs/spec.md`](docs/spec.md)（外部仕様書）の内容に沿って [`e2e/calculator.spec.ts`](e2e/calculator.spec.ts) にまとめてあり、ヘッドレスのChromiumに対して実行される。
 
-   ボタンのラベルは全角の `：` `−` `×` `÷` なので、要素を指定する際は半角記号ではなくこちらを使う。
+新しい機能を追加したときは、このファイルにもシナリオを追記すること。
 
-代表的な確認シナリオは [`e2e/calculator.spec.ts`](e2e/calculator.spec.ts) に `@playwright/test` 形式のテストコードとしてまとめてある。Playwright MCPで動作確認する際はこれを参考にする（`@playwright/test` は依存関係に追加していないため、このファイル自体は `npx playwright test` では実行できないリファレンス）。
+### Playwright MCPでの手動確認
 
-CIなどで自動テストとして繰り返し実行したい場合は、`npm install -D @playwright/test` して通常の Playwright Test プロジェクトとしてセットアップするのが確実（詳細は [`CLAUDE.md`](CLAUDE.md) を参照）。
+自動テストとは別に、Claude Codeに画面を実際に操作・確認してもらいたい場合（探索的な確認やスクリーンショットなど）は、Playwright MCP（`.mcp.json` に設定済み）も利用できる。
+
+```
+npm run dev でサーバーを起動したので、Playwright MCPで http://localhost:5173/TimeCalc/ を開いて
+「1:30 + 3:45」を入力し「=」を押した結果が 5:15 になることを確認して
+```
+
+ボタンのラベルは全角の `：` `−` `×` `÷` なので、要素を指定する際は半角記号ではなくこちらを使う（詳細は [`CLAUDE.md`](CLAUDE.md) を参照）。
 
 ## デプロイ
 
@@ -109,7 +117,9 @@ src/
   App.tsx
   main.tsx
 e2e/
-  calculator.spec.ts   # Playwright MCPでの動作確認シナリオ（リファレンス、npm testの対象外）
+  calculator.spec.ts   # PlaywrightのE2Eテスト（npm run test:e2e、npm testの対象外）
+docs/
+  spec.md             # 外部仕様書（ユーザーから見た振る舞いの定義）
 ```
 
 - **`timeCalc.ts`**: `{ kind: 'time'; seconds }` / `{ kind: 'number'; value }` という型付きの値を扱う再帰下降パーサー兼評価器。演算子ごとに組み合わせ可能な型を検査し、不正な組み合わせは `TimeCalcError` を投げる。時間は常に秒で内部保持するため、表示が `H:MM` までの現状でも、計算途中の秒成分は失われない。
