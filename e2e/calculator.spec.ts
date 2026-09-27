@@ -343,3 +343,71 @@ test.describe('入力の編集操作', () => {
     expect((await readDisplay(page)).formulaText).toBe('912 + 34')
   })
 })
+
+test.describe('キーボードからの入力', () => {
+  // ページ表示直後はキーボードのリスナー登録前のことがあるため、先にボタンを1回クリックして
+  // Reactの描画・副作用の反映が済んだ状態にしてからキーを送る。
+  test.beforeEach(async ({ page }) => {
+    await press(page, 'AC')
+  })
+
+  /** キーを順番に押す（Playwright のキー名。例: '1', ':', 'Enter', 'Numpad5'）。 */
+  async function typeKeys(page: Page, keys: string[]) {
+    for (const key of keys) {
+      await page.keyboard.press(key)
+    }
+  }
+
+  test('数字・:・+・Enter で時間の計算ができる（1:30 + 3:45 = 5:15）', async ({ page }) => {
+    await typeKeys(page, ['1', ':', '3', '0', '+', '3', ':', '4', '5'])
+    expect((await readDisplay(page)).formulaText).toBe('1:30 + 3:45')
+    await page.keyboard.press('Enter')
+    expect((await readDisplay(page)).resultText).toBe('5:15')
+  })
+
+  test('* / - ( ) . = が対応する演算子・記号として入力される', async ({ page }) => {
+    await typeKeys(page, ['4', '0', ':', '0', '0', '/', '8', '*', '(', '1', '-', '0', '.', '5', ')'])
+    expect((await readDisplay(page)).formulaText).toBe('40:00 ÷ 8 × (1 - 0.5)')
+    await page.keyboard.press('=')
+    expect((await readDisplay(page)).resultText).toBe('2:30')
+  })
+
+  test('テンキーの数字・演算子・Enter でも入力できる', async ({ page }) => {
+    // Playwright はテンキーを NumLock オフ相当で扱う（Numpad1 → End 等）ため、
+    // Shift 付きで押して NumLock オン時と同じ文字（'1' '.' 等）を入力させる。
+    await typeKeys(page, ['Shift+Numpad1', 'Shift+Numpad2', 'NumpadAdd', 'Shift+Numpad3', 'Shift+NumpadDecimal', 'Shift+Numpad5', 'NumpadEnter'])
+    const d = await readDisplay(page)
+    expect(d.formulaText).toBe('12 + 3.5')
+    expect(d.resultText).toBe('15.5')
+  })
+
+  test('Backspace・矢印キー・Escape がそれぞれ ⌫・← →・AC として動く', async ({ page }) => {
+    await typeKeys(page, ['1', '2', '+', '3', '4', 'Backspace'])
+    expect((await readDisplay(page)).formulaText).toBe('12 + 3')
+    await typeKeys(page, ['ArrowLeft', 'ArrowLeft', '9', 'ArrowRight'])
+    expect((await readDisplay(page)).formulaText).toBe('129 + 3')
+    await page.keyboard.press('Escape')
+    const d = await readDisplay(page)
+    expect(d.formulaText).toBe('')
+    expect(d.resultText.trim()).toBe('')
+  })
+
+  test('入力できない操作はキーボードからも行えない', async ({ page }) => {
+    await typeKeys(page, ['*', '1', '+', '+', '*', ')'])
+    expect((await readDisplay(page)).formulaText).toBe('1 +')
+  })
+
+  test('ボタンをクリックした後に Enter を押しても、そのボタンが二重に押されない', async ({ page }) => {
+    // クリックしたボタンにはフォーカスが残るので、Enter の既定動作でボタンが押されないことを確認する。
+    await pressAll(page, ['1', '+', '2'])
+    await page.keyboard.press('Enter')
+    const d = await readDisplay(page)
+    expect(d.formulaText).toBe('1 + 2')
+    expect(d.resultText).toBe('3')
+  })
+
+  test('Ctrl との組み合わせや対応表にないキーは入力として扱わない', async ({ page }) => {
+    await typeKeys(page, ['1', 'Control+2', 'a', 'Delete', ';'])
+    expect((await readDisplay(page)).formulaText).toBe('1')
+  })
+})

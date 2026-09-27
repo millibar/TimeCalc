@@ -1,5 +1,6 @@
-import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { applyButton, initialState, type Button } from '../lib/calculatorInput'
+import { buttonFromKey } from '../lib/keyboardInput'
 import {
   formatNumber,
   formatTime,
@@ -149,6 +150,20 @@ const KEYS: Key[][] = [
 
 export default function Calculator() {
   const [state, setState] = useState(initialState)
+
+  // キーボード入力。フォーカス位置によらず受け付けるよう window で拾う。
+  // 対応するキーは既定動作を止める（フォーカス中のボタンが Enter で押されて二重入力に
+  // なるのを防ぐ、Firefox の「/」クイック検索を防ぐ、など）。
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const btn = buttonFromKey(e)
+      if (!btn) return
+      e.preventDefault()
+      setState((s) => applyButton(s, btn))
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   return (
     <div className="calculator">
