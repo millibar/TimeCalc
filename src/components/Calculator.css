@@ -6,6 +6,10 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+  /* スマホのホームインジケーターやジェスチャーバー、ブラウザのツールバーとキーパッドが
+     干渉しないよう、下側は余白を広めに取る。viewport-fit=cover 指定下では
+     safe-area-inset-bottom（iPhoneのホームインジケーター等）の分も上乗せする。 */
+  padding-bottom: max(32px, calc(16px + env(safe-area-inset-bottom)));
   box-sizing: border-box;
 }
 
